@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: betalink-backend
+    env: node
+    rootDir: Backend
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+  - type: static
+    name: betalink-frontend
+    rootDir: betalink-react-app
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    plan: free
