@@ -1,11 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const path = require('path');
 
-// Load environment variables
-dotenv.config();
+// Load dotenv only in development
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -18,8 +19,16 @@ const contactRoutes = require('./routes/contactRoutes');
 const app = express();
 
 // Middleware
+// CORS: allow frontend URLs in development, allow all in production or set to your Render frontend domain
+const allowedOrigins = process.env.NODE_ENV === 'production'
+    ? [process.env.FRONTEND_URL] // Set this env var in Render to your deployed frontend URL
+    : [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:5175'
+    ];
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'], // Vite dev server urls
+    origin: allowedOrigins,
     credentials: true,
 }));
 app.use(express.json());
@@ -76,11 +85,18 @@ mongoose
     .then(() => {
         console.log('✅ MongoDB connected successfully');
 
-        // Start server
         app.listen(PORT, () => {
-            console.log(`🚀 Server is running on port ${PORT}`);
-            console.log(`📍 API URL: http://localhost:${PORT}`);
-            console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+            if (process.env.NODE_ENV === 'production') {
+                // Render provides the public URL as process.env.RENDER_EXTERNAL_URL
+                const serviceUrl = process.env.RENDER_EXTERNAL_URL || `https://your-service.onrender.com`;
+                console.log(`🚀 Server is running on port ${PORT}`);
+                console.log(`🌐 Service URL: ${serviceUrl}`);
+                console.log(`🏥 Health check: ${serviceUrl}/api/health`);
+            } else {
+                console.log(`🚀 Server is running on port ${PORT}`);
+                console.log(`📍 API URL: http://localhost:${PORT}`);
+                console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+            }
         });
     })
     .catch((error) => {
